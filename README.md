@@ -20,7 +20,7 @@ Java project with Maven that calculates the total of an order based on a list of
 
 
 ## 📂 Structure of the project
-
+![Digram](/diagram.png)
 ## 🧪 Running Tests
 
 To run tests, run the following command
