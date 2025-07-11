@@ -30,3 +30,10 @@ jobs:
 
     - name: Build y test con cobertura
       run: mvn clean verify
+    
+    #create artefact
+    - name: Upload coverage report-artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reporte
+        path: build/reports/jacoco/test/html

@@ -1,48 +1,73 @@
-/* 
+
 package com.ejemplo;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.BeforeEach;
 
 public class OrderServiceTest {
 
-    private final OrderService service = new OrderService();
+    private DiscountService repository;
+    private OrderService service;
+
+    @BeforeEach
+    public void setup() {
+        repository = mock(DiscountService.class);
+        service = new OrderService(repository);
+    }
 
     @Test
     public void testWithoutDiscountAndStandardShipment() {
-        double result = service.calculateTotal(100.0, false, false);
+        when(repository.getRate(null)).thenReturn(0.0);
+
+        double result = service.calculateTotal(100.0, null, false);
         assertEquals(110.0, result, 0.001);
     }
 
     @Test
     public void testWithDiscountAndStandardShipment() {
-        double result = service.calculateTotal(100.0, true, false);
-        assertEquals(100.0, result, 0.001);  // 100 - 10 + 10
-    }
+        when(repository.getRate("SALES10")).thenReturn(0.10);
 
-    @Test
-    public void testWithoutDiscountAndExpressShipment() {
-        double result = service.calculateTotal(100.0, false, true);
-        assertEquals(120.0, result, 0.001);
+        double result = service.calculateTotal(100.0, "SALES10", false);
+        assertEquals(100.0, result, 0.001); // 100 - 10 + 10
     }
 
     @Test
     public void testWithDiscountAndExpressShipment() {
-        double result = service.calculateTotal(100.0, true, true);
-        assertEquals(110.0, result, 0.001); // 100 - 10 + 20
+        when(repository.getRate("SALES10")).thenReturn(0.10);
+
+        double result = service.calculateTotal(200.0, "SALES10", true);
+        assertEquals(200.0 * 0.9 + 20.0, result, 0.001); // 180 + 20 = 200
+    }
+
+    @Test
+    public void testWithUnknownDiscountCode() {
+        when(repository.getRate("UNKNOWN")).thenReturn(0.0);
+
+        double result = service.calculateTotal(50.0, "UNKNOWN", true);
+        assertEquals(50.0 + 20.0, result, 0.001); // sin descuento
     }
 
     @Test
     public void testZeroSubtotal() {
-        double result = service.calculateTotal(0.0, true, true);
-        assertEquals(20.0, result, 0.001); // solo el costo de envío
+        when(repository.getRate("SALES10")).thenReturn(0.10);
+
+        double result = service.calculateTotal(0.0, "SALES10", false);
+        assertEquals(10.0, result, 0.001); // solo envío estándar
     }
 
     @Test
-    public void testNegativeSubtotal() {
+    public void testNegativeSubtotalThrowsException() {
+        when(repository.getRate("SALES10")).thenReturn(0.10);
+
         IllegalArgumentException exception = assertThrows(
-IllegalArgumentException.class,() -> service.calculateTotal(-100.0, true, false));
-assertEquals("Subtotal can't negative", exception.getMessage());
+            IllegalArgumentException.class,
+            () -> service.calculateTotal(-50.0, "SALES10", true)
+        );
+        assertEquals("Subtotal can't negative", exception.getMessage());
+    }
+
 }
-}
- */
